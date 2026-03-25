@@ -29,18 +29,44 @@ const uploadFileMetadataSchema = z.object({
     .max(maxUploadSizeBytes, "The file must be 10 MB or smaller."),
 })
 
+const getAverageConfidence = (report: Awaited<ReturnType<typeof ExpenseReportLogic.getExpenseReportsByUserId>>[number]) => {
+  const confidences = Object.values(report.fields)
+    .map((field) => field?.confidence)
+    .filter((confidence): confidence is number => confidence !== null && confidence !== undefined)
+
+  if (confidences.length === 0) {
+    return null
+  }
+
+  const average = confidences.reduce((total, confidence) => total + confidence, 0) / confidences.length
+  return Number(average.toFixed(2))
+}
+
 export const GET = async (request: Request) => {
   try {
     const decodedToken = await verifyAuthToken(request)
     const reports = await ExpenseReportLogic.getExpenseReportsByUserId(decodedToken.uid)
     const data = await Promise.all(
-      reports.map(async (r) => ({
-        id: r.id,
-        status: r.status,
+      reports.map(async (report) => ({
+        id: report.id,
+        status: report.status,
+        confidence: getAverageConfidence(report),
         receiptUrl:
-          r.status === "failed" || !r.receipt.storagePath
+          !report.receipt.storagePath
             ? null
-            : await getSignedUrl(r.receipt.storagePath),
+            : await getSignedUrl(report.receipt.storagePath),
+        invoiceNumber: report.fields.invoiceNumber?.value ?? null,
+        description: report.fields.description?.value ?? null,
+        amount: report.fields.amount?.value ?? null,
+        currency: report.fields.currency?.value ?? null,
+        category: report.fields.category?.value ?? null,
+        expenseDate: report.fields.expenseDate?.value ?? null,
+        vendorName: report.fields.vendorName?.value ?? null,
+        additionalNotes: report.fields.additionalNotes?.value ?? null,
+        subtotal: report.fields.subtotal?.value ?? null,
+        taxAmount: report.fields.taxAmount?.value ?? null,
+        dueDate: report.fields.dueDate?.value ?? null,
+        vendorTaxId: report.fields.vendorTaxId?.value ?? null,
       }))
     )
     return Response.json(getExpenseReportsResponseSchema.parse({ data }))

@@ -1,0 +1,53 @@
+.wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    background: #ffffff;
+}
+
+.table {
+    width: 100%;
+    min-width: 640px;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.head {
+    background: #f8fafc;
+}
+
+.headerCell {
+    padding: 14px 16px;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #475569;
+    width: 1%;
+    text-align: left;
+}
+
+.bodyRow {
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.bodyRow:last-child {
+    border-bottom: none;
+}
+
+.cell {
+    padding: 16px;
+    font-size: 14px;
+    color: #0f172a;
+    vertical-align: middle;
+    word-break: break-word;
+}
+
+.emptyCell {
+    padding: 24px 16px;
+    font-size: 14px;
+    text-align: center;
+    color: #64748b;
+}

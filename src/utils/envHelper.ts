@@ -1,4 +1,3 @@
-// Client-side (public) environment variables
 export const clientEnv = {
   firebase: {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -7,7 +6,6 @@ export const clientEnv = {
   },
 }
 
-// Server-side (private) environment variables
 export const serverEnv = {
   firebase: {
     projectId: process.env.FIREBASE_PROJECT_ID,

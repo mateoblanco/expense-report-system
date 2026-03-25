@@ -1,0 +1,63 @@
+*,
+*::after,
+*::before {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+	scrollbar-color: inherit;
+	scrollbar-width: inherit;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.root {
+	isolation: isolate;
+  }
+  
+html {
+	--scroll-behavior: smooth !important;
+
+	box-sizing: border-box;
+	min-height: 100%;
+	position: relative;
+	text-size-adjust: 100%;
+	touch-action: manipulation;
+	-webkit-text-size-adjust: none;
+	scroll-behavior: smooth !important;
+
+}
+
+html:focus-within {
+	scroll-behavior: smooth;
+}
+
+body {
+	background-color: #FFFFFF;
+	font-feature-settings: 'liga' 1, 'calt' 1;
+	font-family: var(--font-geist-sans), sans-serif;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	font-style: normal;
+	min-height: 100%;
+	overflow-x: hidden !important;
+	overscroll-behavior: none;
+	position: relative;
+	scroll-behavior: smooth;
+	text-rendering: optimizespeed;
+	overscroll-behavior-x: contain;
+	touch-action: manipulation;
+	-webkit-text-size-adjust: none;
+}
+
+html,
+body,
+#__next,
+main {
+	min-height: 100vh;
+
+	@supports (min-height: 100dvh) {
+		min-height: 100dvh;
+	}
+}
+
+
+
