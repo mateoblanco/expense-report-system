@@ -1,1 +1,1 @@
-export const TEST_WORKFLOW_EVENT_NAME = "testworkflow/extract-invoice-number";
+export const EXPENSE_REPORT_EXTRACT_DATA_EVENT = "expense-report/extract-data"
