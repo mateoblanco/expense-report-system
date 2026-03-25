@@ -1,4 +1,11 @@
-import { ExpenseReportsSuccessResponse, expenseReportsSuccessResponseSchema, GetExpenseReportsResponse } from "@/app/api/expense-reports/contract"
+import {
+    ExpenseReportsSuccessResponse,
+    expenseReportsSuccessResponseSchema,
+    GetExpenseReportsResponse,
+    UpdateExpenseReportRequest,
+    UpdateExpenseReportResponse,
+    updateExpenseReportResponseSchema,
+} from "@/app/api/expense-reports/contract"
 import { useUser } from "@/providers/UserProvider"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useCallback } from "react"
@@ -39,6 +46,29 @@ const postExpenseReports = async (files: File[], getToken: () => Promise<string>
     return expenseReportsSuccessResponseSchema.parse(await response.json())
 }
 
+const putExpenseReport = async (
+    id: string,
+    data: UpdateExpenseReportRequest,
+    getToken: () => Promise<string>,
+) => {
+    const token = await getToken()
+    const response = await fetch(`/api/expense-reports/${id}`, {
+        method: "PUT",
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+        const errorResponse = await response.json().catch(() => null) as { error?: string } | null
+        throw new Error(errorResponse?.error ?? `Request failed with status ${response.status}.`)
+    }
+
+    return updateExpenseReportResponseSchema.parse(await response.json())
+}
+
 const useExpenseReportsQueries = () => {
     const { user } = useUser()
     const queryClient = useQueryClient()
@@ -55,7 +85,11 @@ const useExpenseReportsQueries = () => {
     const reportsQuery = useQuery<GetExpenseReportsResponse>({
         queryKey: ["expense-reports"],
         queryFn: () => fetchExpenseReports(() => user!.getIdToken()),
-        enabled: false,
+        enabled: !!user,
+        refetchInterval: (query) => {
+            const hasProcessingReports = query.state.data?.data?.some((report) => report.status === "processing")
+            return hasProcessingReports ? 3000 : false
+        },
     })
 
     const uploadMutation = useMutation<ExpenseReportsSuccessResponse, Error, File[]>({
@@ -63,13 +97,33 @@ const useExpenseReportsQueries = () => {
         mutationKey: ["uploadExpenseReports"],
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ["expense-reports"] })
-            await reportsQuery.refetch()
         },
         onError: handleError,
     })
 
     const uploadExpenseReports = async (files: File[]) => {
         return await uploadMutation.mutateAsync(files)
+    }
+
+    const updateMutation = useMutation<UpdateExpenseReportResponse, Error, { id: string, changes: UpdateExpenseReportRequest }>({
+        mutationFn: ({ id, changes }) => putExpenseReport(id, changes, () => user!.getIdToken()),
+        mutationKey: ["updateExpenseReport"],
+        onSuccess: (updatedReport) => {
+            queryClient.setQueryData<GetExpenseReportsResponse | undefined>(["expense-reports"], (currentData) => {
+                if (!currentData) {
+                    return currentData
+                }
+
+                return {
+                    data: currentData.data.map((report) => report.id === updatedReport.id ? updatedReport : report),
+                }
+            })
+        },
+        onError: handleError,
+    })
+
+    const updateExpenseReport = async (id: string, changes: UpdateExpenseReportRequest) => {
+        return await updateMutation.mutateAsync({ id, changes })
     }
 
     return {
@@ -80,11 +134,16 @@ const useExpenseReportsQueries = () => {
             isSuccess: uploadMutation.isSuccess,
         },
         reports: {
-            onFetch: reportsQuery.refetch,
             isLoading: reportsQuery.isFetching,
             isError: reportsQuery.isError,
             isSuccess: reportsQuery.isSuccess,
             data: reportsQuery.data?.data,
+        },
+        update: {
+            onSave: updateExpenseReport,
+            isLoading: updateMutation.isPending,
+            isError: updateMutation.isError,
+            isSuccess: updateMutation.isSuccess,
         },
     }
 }

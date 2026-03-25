@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import classNames from "classnames"
 import type { GetExpenseReportsResponse } from "@/app/api/expense-reports/contract"
 import Table, { type TableColumn } from "@/components/base/Table/Table"
@@ -6,77 +6,83 @@ import { formatAmountWithCurrency } from "@/utils/currency"
 import useExpenseReportsMutations from "../hooks/useExpenseReportsQueries"
 import styles from "./ExpenseReports.module.scss"
 import CreateReportsModal from "./CreateReportsModal/CreateReportsModal"
+import ExpenseReportDetailsModal from "./ExpenseReportDetailsModal/ExpenseReportDetailsModal"
 
 type ExpenseReportRow = GetExpenseReportsResponse["data"][number]
 
-const reportColumns: TableColumn<ExpenseReportRow>[] = [
-    { key: "invoiceNumber", header: "Invoice Number" },
+const ExpenseReports = () => {
+    const { reports, update } = useExpenseReportsMutations()
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+    const [selectedReportId, setSelectedReportId] = useState<string | null>(null)
+    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
 
-    { key: "category", header: "Category" },
-    { key: "vendorName", header: "Vendor Name" },
-    { key: "expenseDate", header: "Expense Date" },
-    { key: "dueDate", header: "Due Date" },
-    {
-        key: "amount",
-        header: "Amount",
-        render: (value, row) => value ? formatAmountWithCurrency(value as number, row.currency as string) : null,
-    },
+    const selectedReport = reports.data?.find((report) => report.id === selectedReportId) ?? null
 
-    {
-        key: "status",
-        header: "Status",
-        render: (value, row) => {
-            return (
-                <>
-                    <span className={classNames(styles.statusBadge, {
-                        [styles.processing]: value === "processing",
-                        [styles.completed]: value === "completed",
-                        [styles.failed]: value === "failed",
-                    })}>
-                        {getStatusLabel(value as "processing" | "completed" | "failed")}
-                    </span>
-                    {
-                        row.confidence && `${(row.confidence * 100)}%`
-                    }
-                </>
+    const reportColumns: TableColumn<ExpenseReportRow>[] = [
+        { key: "invoiceNumber", header: "Invoice Number" },
+        { key: "category", header: "Category" },
+        { key: "vendorName", header: "Vendor Name" },
+        { key: "expenseDate", header: "Expense Date" },
+        { key: "dueDate", header: "Due Date" },
+        {
+            key: "amount",
+            header: "Amount",
+            render: (value, row) => typeof value === "number" ? formatAmountWithCurrency(value, row.currency) : null,
+        },
+        {
+            key: "status",
+            header: "Status",
+            render: (value, row) => {
+                return (
+                    <div className={styles.statusCell}>
+                        <span className={classNames(styles.statusBadge, {
+                            [styles.processing]: value === "processing",
+                            [styles.completed]: value === "completed",
+                            [styles.failed]: value === "failed",
+                        })}>
+                            {getStatusLabel(value as ExpenseReportRow["status"])}
+                        </span>
+                        <span className={styles.confidenceText}>
+                            {typeof row.confidence === "number" ? `${(row.confidence * 100).toFixed(0)}%` : "-"}
+                        </span>
+                    </div>
+                )
+            },
+        },
+        {
+            key: "receiptUrl",
+            header: "",
+            render: (value) => (
+                value ? (
+                    <a
+                        className={styles.receiptLink}
+                        href={value as string}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        View
+                    </a>
+                ) : (
+                    <span className={styles.mutedText}>Unavailable</span>
+                )
             )
         },
-    },
-    {
-        key: "receiptUrl",
-        header: "",
-        render: (value) => (
-            value ? (
-                <a
-                    className={styles.receiptLink}
-                    href={value as string}
-                    target="_blank"
-                    rel="noopener noreferrer"
+        {
+            header: "",
+            render: (_value, row) => (
+                <button
+                    type="button"
+                    className={styles.inlineButton}
+                    onClick={() => {
+                        setSelectedReportId(row.id)
+                        setIsDetailsModalOpen(true)
+                    }}
                 >
-                    View
-                </a>
-            ) : (
-                <span className={styles.mutedText}>Unavailable</span>
-            )
-        ),
-    },
-    {
-        header: "",
-        render: () => (
-           <button type="button" onClick={() => console.log("edit")}>Edit</button>
-        ),
-    },
-]
-
-const ExpenseReports = () => {
-
-    const { reports } = useExpenseReportsMutations()
-    const { onFetch } = reports
-    const [isModalOpen, setIsModalOpen] = useState(false)
-
-    useEffect(() => {
-        void onFetch()
-    }, [onFetch])
+                    View / Edit
+                </button>
+            ),
+        },
+    ]
 
     return (
         <>
@@ -86,7 +92,7 @@ const ExpenseReports = () => {
                     <div className={styles.actions}>
                         <button
                             type="button"
-                            onClick={() => setIsModalOpen(true)}
+                            onClick={() => setIsCreateModalOpen(true)}
                         >
                             Create Report
                         </button>
@@ -106,7 +112,23 @@ const ExpenseReports = () => {
                 </div>
             </main>
 
-            <CreateReportsModal open={isModalOpen} onOpenChange={setIsModalOpen} />
+            <CreateReportsModal open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen} />
+            {selectedReport ? (
+                <ExpenseReportDetailsModal
+                    key={selectedReport.id}
+                    open={isDetailsModalOpen}
+                    report={selectedReport}
+                    isSaving={update.isLoading}
+                    onOpenChange={(open) => {
+                        setIsDetailsModalOpen(open)
+
+                        if (!open) {
+                            setSelectedReportId(null)
+                        }
+                    }}
+                    onSave={update.onSave}
+                />
+            ) : null}
         </>
     )
 }

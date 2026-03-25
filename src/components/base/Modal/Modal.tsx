@@ -1,4 +1,5 @@
 import { Dialog } from '@base-ui/react/dialog';
+import classNames from 'classnames';
 import styles from './Modal.module.scss';
 
 type Props = {
@@ -19,7 +20,9 @@ const Modal = (props: Props) => {
             <Dialog.Portal>
                 <Dialog.Backdrop className={styles.Backdrop} />
                 <Dialog.Viewport className={styles.Viewport}>
-                    <Dialog.Popup className={styles.Popup}>
+                    <Dialog.Popup className={classNames(styles.Popup, {
+                        [styles.scrollable]: props.scrollable,
+                    })}>
                         {props.children}
                     </Dialog.Popup>
                 </Dialog.Viewport>

@@ -2,7 +2,8 @@ import { ExpenseReportsRepository } from "@/server/dataRepository/expenseReports
 import { uploadFile, deleteFile, getInvoicesStoragePath } from "@/server/services/firebase/storage"
 import { inngest } from "@/server/services/inngest/client"
 import { EXPENSE_REPORT_EXTRACT_DATA_EVENT } from "@/server/services/inngest/events"
-import { ExpenseReport } from "@/types"
+import { ExpenseReport, type ExpenseReportFieldValues } from "@/types"
+import type { InvoiceExtractionResult } from "./dataExtraction/schema"
 import pLimit from "p-limit"
 import { getErrorMessage } from "../helpers"
 
@@ -33,11 +34,31 @@ const getExpenseReportsByUserId = async (userId: string): Promise<ExpenseReport[
   return ExpenseReportsRepository.findExpenseReportsByUserId(userId)
 }
 
+const getExpenseReportById = async (id: string): Promise<ExpenseReport | null> => {
+  return ExpenseReportsRepository.findExpenseReportById(id)
+}
+
 const updateExpenseReportExtraction = async (
   id: string,
-  data: Pick<ExpenseReport, "status" | "fields" | "extraction">,
+  data: Pick<ExpenseReport, "status" | "fields" | "extraction" | "confidence">,
 ): Promise<ExpenseReport | null> => {
   return ExpenseReportsRepository.updateExpenseReport(id, data)
+}
+
+const updateExpenseReportFields = async (
+  id: string,
+  data: ExpenseReportFieldValues,
+): Promise<ExpenseReport | null> => {
+  const currentReport = await ExpenseReportsRepository.findExpenseReportById(id)
+
+  if (!currentReport) {
+    return null
+  }
+
+  return ExpenseReportsRepository.updateExpenseReport(id, {
+    fields: data,
+    confidence: null,
+  })
 }
 
 const markExpenseReportAsFailed = async (
@@ -47,6 +68,7 @@ const markExpenseReportAsFailed = async (
 ): Promise<ExpenseReport | null> => {
   return ExpenseReportsRepository.updateExpenseReport(id, {
     status: "failed",
+    confidence: null,
     fields: emptyExpenseReportFields,
     extraction: {
       provider,
@@ -71,6 +93,7 @@ const processSingleExpenseReport = async (
       const report = await ExpenseReportsRepository.createExpenseReport({
       userId,
       status: "processing",
+      confidence: null,
       fields: emptyExpenseReportFields,
       receipt: {
         storagePath: "",
@@ -178,9 +201,24 @@ export const createExpenseReports = async (
 }
 
 export const ExpenseReportLogic = {
+  getExpenseReportById,
   updateExpenseReportExtraction,
+  updateExpenseReportFields,
   markExpenseReportAsFailed,
   createExpenseReports,
   getExpenseReportsByUserId,
   deleteExpenseReport,
+}
+
+export const getAverageConfidence = (extraction: InvoiceExtractionResult) => {
+  const confidences = Object.values(extraction)
+    .map((field) => field.confidence)
+    .filter((confidence): confidence is number => confidence !== null)
+
+  if (confidences.length === 0) {
+    return null
+  }
+
+  const average = confidences.reduce((total, confidence) => total + confidence, 0) / confidences.length
+  return Number(average.toFixed(2))
 }
