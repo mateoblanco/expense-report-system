@@ -87,10 +87,11 @@ const processSingleExpenseReport = async (
   let expenseReportId: string | null = null
   let storagePath: string | null = null
   let fileUploaded = false
+  let receiptLinked = false
 
   try {
-  
-      const report = await ExpenseReportsRepository.createExpenseReport({
+
+    const report = await ExpenseReportsRepository.createExpenseReport({
       userId,
       status: "processing",
       confidence: null,
@@ -119,6 +120,7 @@ const processSingleExpenseReport = async (
         fileName: file.name,
       },
     })
+    receiptLinked = true
 
     await inngest.send({
       name: EXPENSE_REPORT_EXTRACT_DATA_EVENT,
@@ -149,7 +151,7 @@ const processSingleExpenseReport = async (
       }
     }
 
-    if (fileUploaded && storagePath) {
+    if (fileUploaded && storagePath && !receiptLinked) {
       try {
         await deleteFile(storagePath)
       } catch (cleanupError) {

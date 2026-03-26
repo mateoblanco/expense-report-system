@@ -1,14 +1,11 @@
 import { useState } from "react"
-import classNames from "classnames"
-import type { GetExpenseReportsResponse } from "@/app/api/expense-reports/contract"
-import Table, { type TableColumn } from "@/components/base/Table/Table"
-import { formatAmountWithCurrency } from "@/utils/currency"
 import useExpenseReportsMutations from "../hooks/useExpenseReportsQueries"
 import styles from "./ExpenseReports.module.scss"
 import CreateReportsModal from "./CreateReportsModal/CreateReportsModal"
 import ExpenseReportDetailsModal from "./ExpenseReportDetailsModal/ExpenseReportDetailsModal"
-
-type ExpenseReportRow = GetExpenseReportsResponse["data"][number]
+import Button from "@/components/base/Button/Button"
+import ExpenseReportsTable from "./ExpenseReportsTable/ExpenseReportsTable"
+import AddIcon from '@/assets/icons/add.svg';
 
 const ExpenseReports = () => {
     const { reports, update } = useExpenseReportsMutations()
@@ -18,97 +15,33 @@ const ExpenseReports = () => {
 
     const selectedReport = reports.data?.find((report) => report.id === selectedReportId) ?? null
 
-    const reportColumns: TableColumn<ExpenseReportRow>[] = [
-        { key: "invoiceNumber", header: "Invoice Number" },
-        { key: "category", header: "Category" },
-        { key: "vendorName", header: "Vendor Name" },
-        { key: "expenseDate", header: "Expense Date" },
-        { key: "dueDate", header: "Due Date" },
-        {
-            key: "amount",
-            header: "Amount",
-            render: (value, row) => typeof value === "number" ? formatAmountWithCurrency(value, row.currency) : null,
-        },
-        {
-            key: "status",
-            header: "Status",
-            render: (value, row) => {
-                return (
-                    <div className={styles.statusCell}>
-                        <span className={classNames(styles.statusBadge, {
-                            [styles.processing]: value === "processing",
-                            [styles.completed]: value === "completed",
-                            [styles.failed]: value === "failed",
-                        })}>
-                            {getStatusLabel(value as ExpenseReportRow["status"])}
-                        </span>
-                        <span className={styles.confidenceText}>
-                            {typeof row.confidence === "number" ? `${(row.confidence * 100).toFixed(0)}%` : "-"}
-                        </span>
-                    </div>
-                )
-            },
-        },
-        {
-            key: "receiptUrl",
-            header: "",
-            render: (value) => (
-                value ? (
-                    <a
-                        className={styles.receiptLink}
-                        href={value as string}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        View
-                    </a>
-                ) : (
-                    <span className={styles.mutedText}>Unavailable</span>
-                )
-            )
-        },
-        {
-            header: "",
-            render: (_value, row) => (
-                <button
-                    type="button"
-                    className={styles.inlineButton}
-                    onClick={() => {
-                        setSelectedReportId(row.id)
-                        setIsDetailsModalOpen(true)
-                    }}
-                >
-                    View / Edit
-                </button>
-            ),
-        },
-    ]
+    const handleSelectReport = (reportId: string) => {
+        setSelectedReportId(reportId)
+        setIsDetailsModalOpen(true)
+    }
 
     return (
         <>
             <main className={styles.container}>
                 <div className={styles.header}>
-                    <h1 className={styles.title}>Expense Reports</h1>
+                    <h1 className={styles.items_count}>Total reports: {reports.data?.length ?? 0}</h1>
                     <div className={styles.actions}>
-                        <button
-                            type="button"
+                        <Button
+                            label="Create Report"
+                            variant="primary"
                             onClick={() => setIsCreateModalOpen(true)}
-                        >
-                            Create Report
-                        </button>
+                            icon={<AddIcon width={12} height={12} />}
+                        />
                     </div>
                 </div>
                 <div className={styles.reports_container}>
-                    <div aria-live="polite">
-                        {reports.isLoading ? <p className={styles.feedback}>Loading reports...</p> : null}
-                        {reports.isError ? <p className={styles.feedback}>Could not load reports.</p> : null}
-                        {!reports.isLoading && !reports.isError ? (
-                            <Table
-                                columns={reportColumns}
-                                data={reports.data ?? []}
-                            />
-                        ) : null}
-                    </div>
+                    <ExpenseReportsTable
+                        onSelectReport={handleSelectReport}
+                        isLoading={reports.isLoading}
+                        isError={reports.isError}
+                        data={reports.data ?? []}
+                    />
+                    <Button label="Refresh reports" variant="secondary" onClick={() => reports.refetch()} isLoading={reports.isRefreshing} />
                 </div>
             </main>
 
@@ -121,7 +54,6 @@ const ExpenseReports = () => {
                     isSaving={update.isLoading}
                     onOpenChange={(open) => {
                         setIsDetailsModalOpen(open)
-
                         if (!open) {
                             setSelectedReportId(null)
                         }
@@ -134,19 +66,3 @@ const ExpenseReports = () => {
 }
 
 export default ExpenseReports
-
-const getStatusLabel = (status: ExpenseReportRow["status"]) => {
-    if (status === "processing") {
-        return "Processing"
-    }
-
-    if (status === "completed") {
-        return "Completed"
-    }
-
-    if (status === "failed") {
-        return "Failed"
-    }
-
-    return status
-}

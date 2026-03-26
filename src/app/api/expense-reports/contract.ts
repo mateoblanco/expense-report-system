@@ -30,6 +30,7 @@ export const expenseReportListItemSchema = z.object({
   status: z.enum(["processing", "completed", "failed"]),
   confidence: z.number().nullable(),
   receiptUrl: z.string().nullable(),
+  receiptFileName: z.string().nullable(),
   ...editableExpenseReportFieldSchemas,
 })
 
@@ -37,8 +38,8 @@ export const getExpenseReportsResponseSchema = z.object({
   data: z.array(expenseReportListItemSchema),
 })
 
+export type ExpenseReport = z.infer<typeof expenseReportListItemSchema>
 export type GetExpenseReportsResponse = z.infer<typeof getExpenseReportsResponseSchema>
-export type ExpenseReportListItem = z.infer<typeof expenseReportListItemSchema>
 
 export const updateExpenseReportRequestSchema = z.object(editableExpenseReportFieldSchemas)
 

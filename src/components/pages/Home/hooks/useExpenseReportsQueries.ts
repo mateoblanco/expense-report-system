@@ -134,10 +134,12 @@ const useExpenseReportsQueries = () => {
             isSuccess: uploadMutation.isSuccess,
         },
         reports: {
-            isLoading: reportsQuery.isFetching,
+            isLoading: reportsQuery.isLoading,
+            isRefreshing: reportsQuery.isRefetching,
             isError: reportsQuery.isError,
             isSuccess: reportsQuery.isSuccess,
             data: reportsQuery.data?.data,
+            refetch: reportsQuery.refetch,
         },
         update: {
             onSave: updateExpenseReport,

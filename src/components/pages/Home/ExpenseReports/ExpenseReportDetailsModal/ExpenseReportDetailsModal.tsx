@@ -1,170 +1,181 @@
 import { useState } from "react"
+import dynamic from "next/dynamic"
 import Modal from "@/components/base/Modal/Modal"
 import type {
-    GetExpenseReportsResponse,
+    ExpenseReport,
     UpdateExpenseReportRequest,
     UpdateExpenseReportResponse,
 } from "@/app/api/expense-reports/contract"
 import styles from "./ExpenseReportDetailsModal.module.scss"
+import Button from "@/components/base/Button/Button"
+import { amountFieldConfigs, detailFieldConfigs, extraFieldConfigs, FieldConfig } from "./common"
+import Field from "./Field/Field"
+import { FormState, getInitialFormState, getFormPayload } from "./updateHelpers"
+import StatusBadge from "../ExpenseReportsTable/StatusBadge/StatusBadge"
 
-type ExpenseReportRow = GetExpenseReportsResponse["data"][number]
-type EditableFieldKey = keyof UpdateExpenseReportRequest
-type FormState = Record<EditableFieldKey, string>
-
-type FieldConfig = {
-    key: EditableFieldKey
-    label: string
-    inputType: "text" | "number" | "textarea"
-}
+const ReceiptPreview = dynamic(() => import("./ReceiptPreview/ReceiptPreview"), {
+    loading: () => (
+        <div className={styles.previewLoading}>
+            Loading receipt preview...
+        </div>
+    ),
+    ssr: false,
+})
 
 type Props = {
     open: boolean
-    report: ExpenseReportRow
+    report: ExpenseReport
     isSaving: boolean
     onOpenChange: (open: boolean) => void
     onSave: (id: string, changes: UpdateExpenseReportRequest) => Promise<UpdateExpenseReportResponse>
 }
 
-const fieldConfigs: FieldConfig[] = [
-    { key: "invoiceNumber", label: "Invoice Number", inputType: "text" },
-    { key: "description", label: "Description", inputType: "textarea" },
-    { key: "amount", label: "Amount", inputType: "number" },
-    { key: "currency", label: "Currency", inputType: "text" },
-    { key: "category", label: "Category", inputType: "text" },
-    { key: "expenseDate", label: "Expense Date", inputType: "text" },
-    { key: "vendorName", label: "Vendor Name", inputType: "text" },
-    { key: "additionalNotes", label: "Additional Notes", inputType: "textarea" },
-    { key: "subtotal", label: "Subtotal", inputType: "number" },
-    { key: "taxAmount", label: "Tax Amount", inputType: "number" },
-    { key: "dueDate", label: "Due Date", inputType: "text" },
-    { key: "vendorTaxId", label: "Vendor Tax ID", inputType: "text" },
-]
-
 const ExpenseReportDetailsModal = (props: Props) => {
     const report = props.report
     const [isEditing, setIsEditing] = useState(false)
     const [formState, setFormState] = useState<FormState>(() => getInitialFormState(report))
+    const hasReceipt = Boolean(report.receiptUrl)
+
+    console.log(report)
+
+    const handleCancel = () => {
+        setIsEditing(false)
+        setFormState(getInitialFormState(report))
+    }
+
+    const handleSave = async () => {
+
+        await props.onSave(report.id, getFormPayload(formState))
+        setIsEditing(false)
+        props.onOpenChange(false)
+
+    }
+
+    const renderHeader = () => {
+        return (
+            <div className={styles.header}>
+                <div>
+                    <h2 className={styles.title}>
+                        Expense Report
+                    </h2>
+                </div>
+                <div className={styles.headerActions}>
+                    {isEditing ? (
+                        <>
+                            <Button
+                                label="Cancel"
+                                variant="secondary"
+                                onClick={handleCancel}
+                                disabled={props.isSaving}
+                            />
+                            <Button
+                                label="Save"
+                                variant="primary"
+                                onClick={handleSave}
+                                disabled={props.isSaving}
+                                isLoading={props.isSaving}
+                            />
+                        </>
+                    ) : (
+                        <Button
+                            label="Edit"
+                            variant="primary"
+                            onClick={() => setIsEditing(true)}
+                            disabled={props.isSaving}
+                            isLoading={props.isSaving}
+                        />
+                    )}
+                </div>
+            </div>
+        )
+    }
+
+    const renderField = (field: FieldConfig, mode: "edit" | "view") => {
+        const currency = field.inputType === "number" ? report.currency : undefined
+
+        return (
+            <Field
+                label={field.label}
+                size={field.size}
+                inputType={field.inputType}
+                key={field.key}
+                value={formState[field.key]}
+                mode={mode}
+                onChange={(value) => {
+                    setFormState((currentState) => ({
+                        ...currentState,
+                        [field.key]: value,
+                    }))
+                }}
+                currency={currency}
+            />
+        )
+    }
 
     return (
-        <Modal open={props.open} onOpenChange={props.onOpenChange} scrollable>
+        <Modal
+            open={props.open}
+            onOpenChange={props.onOpenChange}
+            scrollable
+            popupClassName={styles.modalPopup}
+        >
+            {renderHeader()}
             <div className={styles.container}>
-                <div className={styles.header}>
-                    <div>
-                        <p className={styles.eyebrow}>Expense Report</p>
-                        <h2 className={styles.title}>{report.invoiceNumber ?? report.id}</h2>
-                    </div>
-                    <div className={styles.headerActions}>
-                        {isEditing ? (
-                            <>
-                                <button
-                                    type="button"
-                                    className={styles.secondaryButton}
-                                    onClick={() => {
-                                        setIsEditing(false)
-                                        setFormState(getInitialFormState(report))
-                                    }}
-                                    disabled={props.isSaving}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="button"
-                                    className={styles.primaryButton}
-                                    onClick={async () => {
-                                        try {
-                                            await props.onSave(report.id, getFormPayload(formState))
-                                            setIsEditing(false)
-                                            props.onOpenChange(false)
-                                        } catch {
-                                            return
-                                        }
-                                    }}
-                                    disabled={props.isSaving}
-                                >
-                                    {props.isSaving ? "Saving..." : "Save"}
-                                </button>
-                            </>
-                        ) : (
-                            <button
-                                type="button"
-                                className={styles.primaryButton}
-                                onClick={() => setIsEditing(true)}
-                            >
-                                Edit
-                            </button>
-                        )}
-                    </div>
-                </div>
+                <div className={styles.contentGrid}>
+                    <div className={styles.detailsColumn}>
+                        <div className={styles.section}>
+                            <div className={styles.section_fields}>
+                                <h3 className={styles.section_title}>Extraction Details</h3>
+                            </div>
+                            <div className={styles.extraction_details}>
+                                <div className={styles.extraction_field}>
+                                    <label className={styles.extraction_label}>ID</label>
+                                    <span className={styles.extraction_value}>{report.id}</span>
+                                </div>
+                                <div className={styles.extraction_field}>
+                                    <label className={styles.extraction_label}>Status</label>
+                                    <span className={styles.extraction_value}>
+                                        <StatusBadge status={report.status} />
+                                    </span>
+                                </div>
+                                <div className={styles.extraction_field}>
+                                    <label className={styles.extraction_label}>Confidence</label>
+                                    <span className={styles.extraction_value}>{typeof report.confidence === "number" ? `${(report.confidence * 100).toFixed(0)}%` : "-"}</span>
+                                </div>
+                            </div>
+                        </div>
 
-                <div className={styles.meta}>
-                    <div className={styles.metaItem}>
-                        <span className={styles.metaLabel}>ID</span>
-                        <span className={styles.metaValue}>{report.id}</span>
+                        <div className={styles.section}>
+                            <div className={styles.section_fields}>
+                                <h3 className={styles.section_title}>Details</h3>
+                                <div className={styles.fields}>
+                                    {detailFieldConfigs.map((field) => (
+                                        renderField(field, isEditing ? "edit" : "view")
+                                    ))}
+                                </div>
+                                <div className={styles.fields}>
+                                    {amountFieldConfigs.map((field) => (
+                                        renderField(field, isEditing ? "edit" : "view")
+                                    ))}
+                                </div>
+                                <div className={styles.fields}>
+                                    {extraFieldConfigs.map((field) => (
+                                        renderField(field, isEditing ? "edit" : "view")
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div className={styles.metaItem}>
-                        <span className={styles.metaLabel}>Status</span>
-                        <span className={styles.metaValue}>{report.status}</span>
-                    </div>
-                    <div className={styles.metaItem}>
-                        <span className={styles.metaLabel}>Confidence</span>
-                        <span className={styles.metaValue}>
-                            {typeof report.confidence === "number" ? report.confidence.toFixed(2) : "-"}
-                        </span>
-                    </div>
-                    <div className={styles.metaItem}>
-                        <span className={styles.metaLabel}>Receipt</span>
-                        {report.receiptUrl ? (
-                            <a
-                                className={styles.link}
-                                href={report.receiptUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                View PDF
-                            </a>
-                        ) : (
-                            <span className={styles.metaValue}>Unavailable</span>
-                        )}
-                    </div>
-                </div>
 
-                <div className={styles.fields}>
-                    {fieldConfigs.map((field) => (
-                        <label key={field.key} className={styles.field}>
-                            <span className={styles.label}>{field.label}</span>
-                            {isEditing ? (
-                                field.inputType === "textarea" ? (
-                                    <textarea
-                                        className={styles.textarea}
-                                        value={formState[field.key]}
-                                        onChange={(event) => {
-                                            setFormState((currentState) => ({
-                                                ...currentState,
-                                                [field.key]: event.target.value,
-                                            }))
-                                        }}
-                                        rows={4}
-                                    />
-                                ) : (
-                                    <input
-                                        className={styles.input}
-                                        type={field.inputType}
-                                        value={formState[field.key]}
-                                        onChange={(event) => {
-                                            setFormState((currentState) => ({
-                                                ...currentState,
-                                                [field.key]: event.target.value,
-                                            }))
-                                        }}
-                                    />
-                                )
-                            ) : (
-                                <span className={styles.value}>
-                                    {getDisplayValue(report[field.key])}
-                                </span>
-                            )}
-                        </label>
-                    ))}
+                    {hasReceipt && <aside className={styles.previewColumn}>
+
+                        <ReceiptPreview
+                            reportId={report.id}
+                            url={report.receiptUrl!}
+                            fileName={report.receiptFileName}
+                        />
+
+                    </aside>}
                 </div>
             </div>
         </Modal>
@@ -172,58 +183,3 @@ const ExpenseReportDetailsModal = (props: Props) => {
 }
 
 export default ExpenseReportDetailsModal
-
-const getInitialFormState = (report: ExpenseReportRow): FormState => ({
-    invoiceNumber: report.invoiceNumber ?? "",
-    description: report.description ?? "",
-    amount: report.amount?.toString() ?? "",
-    currency: report.currency ?? "",
-    category: report.category ?? "",
-    expenseDate: report.expenseDate ?? "",
-    vendorName: report.vendorName ?? "",
-    additionalNotes: report.additionalNotes ?? "",
-    subtotal: report.subtotal?.toString() ?? "",
-    taxAmount: report.taxAmount?.toString() ?? "",
-    dueDate: report.dueDate ?? "",
-    vendorTaxId: report.vendorTaxId ?? "",
-})
-
-const getFormPayload = (
-    formState: FormState,
-): UpdateExpenseReportRequest => {
-    return {
-        invoiceNumber: normalizeTextValue(formState.invoiceNumber),
-        description: normalizeTextValue(formState.description),
-        amount: normalizeNumberValue(formState.amount),
-        currency: normalizeTextValue(formState.currency),
-        category: normalizeTextValue(formState.category),
-        expenseDate: normalizeTextValue(formState.expenseDate),
-        vendorName: normalizeTextValue(formState.vendorName),
-        additionalNotes: normalizeTextValue(formState.additionalNotes),
-        subtotal: normalizeNumberValue(formState.subtotal),
-        taxAmount: normalizeNumberValue(formState.taxAmount),
-        dueDate: normalizeTextValue(formState.dueDate),
-        vendorTaxId: normalizeTextValue(formState.vendorTaxId),
-    }
-}
-
-const normalizeTextValue = (rawValue: string) => {
-    return rawValue === "" ? null : rawValue
-}
-
-const normalizeNumberValue = (rawValue: string) => {
-    if (rawValue === "") {
-        return null
-    }
-
-    const parsedValue = Number(rawValue)
-    return Number.isNaN(parsedValue) ? null : parsedValue
-}
-
-const getDisplayValue = (value: string | number | null) => {
-    if (value === null) {
-        return "-"
-    }
-
-    return value
-}

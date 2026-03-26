@@ -4,11 +4,9 @@ import { useUser } from "@/providers/UserProvider"
 import Login from "../Login/Login"
 import ExpenseReports from "./ExpenseReports/ExpenseReports"
 import Layout from "./Layout/Layout"
-import Navbar from "./Navbar/Navbar"
-
 
 const Home = () => {
-    const { user,  } = useUser()
+    const { user } = useUser()
 
     if (!user) {
         return <Login />
@@ -16,7 +14,6 @@ const Home = () => {
 
     return (
         <Layout>
-            <Navbar />
             <ExpenseReports />
         </Layout>
     )

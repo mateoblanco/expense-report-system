@@ -1,94 +1,32 @@
-.container{
+.container {
     display: flex;
     flex-direction: column;
     gap: 24px;
+    padding: 24px;
 }
 
-.header{
+.header {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.title{
-    font-size:24px;
+.items_count {
+    font-size: 16px;
     font-weight: 600;
+    color: var(--color-text-primary);
 }
 
-.actions{
+.actions {
     display: flex;
     gap: 16px;
     align-items: center;
 }
 
-.reports_container{
+.reports_container {
     display: flex;
     flex-direction: column;
     gap: 16px;
-}
-
-.feedback {
-    font-size: 14px;
-    color: #475569;
-}
-
-.statusBadge {
-    display: inline-flex;
     align-items: center;
-    padding: 6px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-}
-
-.statusCell {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.confidenceText {
-    font-size: 12px;
-    color: #64748b;
-}
-
-.processing {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-.completed {
-    background: #dcfce7;
-    color: #166534;
-}
-
-.failed {
-    background: #fee2e2;
-    color: #991b1b;
-}
-
-.receiptLink {
-    color: #0f766e;
-    font-weight: 600;
-    text-decoration: none;
-}
-
-.receiptLink:hover {
-    text-decoration: underline;
-}
-
-.mutedText {
-    color: #64748b;
-}
-
-.inlineButton {
-    border: 1px solid #cbd5e1;
-    border-radius: 999px;
-    padding: 8px 12px;
-    background: #ffffff;
-    color: #0f172a;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
+    padding-bottom: 24px;
 }

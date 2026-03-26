@@ -2,38 +2,48 @@ import { GoogleAuthProvider, signInWithPopup } from "firebase/auth"
 import { useState } from "react"
 import { auth } from "@/auth/firebase"
 import { useUser } from "@/providers/UserProvider"
+import styles from "./Login.module.scss"
+import Button from "@/components/base/Button/Button"
+import GoogleIcon from "@/assets/icons/google.svg"
+import { useAddErrorToast } from "../Home/hooks/useAddErrorToast"
 
 const googleProvider = new GoogleAuthProvider()
 
-
 const Login = () => {
-    const { user, loading } = useUser()
-    const [error, setError] = useState<string | null>(null)
-    const [isSubmitting, setIsSubmitting] = useState(false)
-  
-    const handleGoogleSignIn = async () => {
-      setError(null)
-      setIsSubmitting(true)
-  
-      try {
-        await signInWithPopup(auth, googleProvider)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Login failed")
-      } finally {
-        setIsSubmitting(false)
-      }
+  const { loading } = useUser()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const addErrorToast = useAddErrorToast()
+
+  const handleGoogleSignIn = async () => {
+    setIsSubmitting(true)
+
+    try {
+      await signInWithPopup(auth, googleProvider)
+    } catch (err) {
+      addErrorToast(err instanceof Error ? err.message : "Login failed")
+    } finally {
+      setIsSubmitting(false)
     }
-  
-    return (
-      <main>
-        <h1>Expense Reports</h1>
-        <button type="button" onClick={handleGoogleSignIn} disabled={isSubmitting}>
-          {isSubmitting ? "Signing in..." : "Sign in with Google"}
-        </button>
-        {error ? <p>{error}</p> : null}
-        {loading ? <p>Loading...</p> : null}
-      </main>
-    )
+  }
+
+  return (
+    <main className={styles.wrapper}>
+      <div className={styles.content}>
+        <div className={styles.title_wrapper}>
+          <h1 className={styles.title}>Welcome to Expensy</h1>
+          <p className={styles.description}>Create expense reports easily</p>
+        </div>
+        <Button
+          label="Continue with Google"
+          variant="primary"
+          onClick={handleGoogleSignIn}
+          disabled={isSubmitting || loading}
+          isLoading={isSubmitting || loading}
+          icon={<GoogleIcon width={16} height={16} />}
+        />
+      </div>
+    </main>
+  )
 }
 
 export default Login

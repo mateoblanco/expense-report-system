@@ -7,6 +7,7 @@ type Props = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     scrollable?: boolean;
+    popupClassName?: string;
 }
 
 const Modal = (props: Props) => {
@@ -22,7 +23,7 @@ const Modal = (props: Props) => {
                 <Dialog.Viewport className={styles.Viewport}>
                     <Dialog.Popup className={classNames(styles.Popup, {
                         [styles.scrollable]: props.scrollable,
-                    })}>
+                    }, props.popupClassName)}>
                         {props.children}
                     </Dialog.Popup>
                 </Dialog.Viewport>

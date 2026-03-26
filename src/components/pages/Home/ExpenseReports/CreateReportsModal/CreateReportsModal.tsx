@@ -1,6 +1,9 @@
 import { useState } from "react"
 import useExpenseReportsMutations from "../../hooks/useExpenseReportsQueries"
 import Modal from "@/components/base/Modal/Modal"
+import styles from "./CreateReportsModal.module.scss"
+import Button from "@/components/base/Button/Button"
+import FileDropzone from "./FileDropzone"
 
 type Props = {
     open: boolean
@@ -12,41 +15,48 @@ const CreateReportsModal = (props: Props) => {
 
     const { upload } = useExpenseReportsMutations()
 
+    const handleOpenChange = (open: boolean) => {
+        if (!open) {
+            setSelectedFiles([])
+        }
+
+        props.onOpenChange(open)
+    }
+
+    const handleUpload = async () => {
+        try {
+            await upload.onUpload(selectedFiles)
+            handleOpenChange(false)
+        } catch {
+            handleOpenChange(false)
+
+        }
+    }
+
     return (
-        <Modal open={props.open} onOpenChange={props.onOpenChange}>
+        <Modal open={props.open} onOpenChange={handleOpenChange}>
+            <div className={styles.container}>
+                <p className={styles.title}>
+                    Upload PDF, JPG, or PNG receipts to create expense reports.
+                </p>
 
-            <p>
-                Upload PDF, JPG, or PNG receipts to create expense reports.
-            </p>
+                <FileDropzone
+                    files={selectedFiles}
+                    disabled={upload.isLoading}
+                    onFilesChange={setSelectedFiles}
+                />
 
-            <input
-                type="file"
-                accept="application/pdf,image/jpeg,image/png"
-                multiple
-                onChange={(event) => {
-                    setSelectedFiles(event.target.files ? Array.from(event.target.files) : [])
-                }}
-            />
-
-            <p>
-                {selectedFiles.length > 0
-                    ? `Selected ${selectedFiles.length} file(s): ${selectedFiles.map((f) => f.name).join(", ")}`
-                    : "No files selected."}
-            </p>
-
-            <button
-                type="button"
-                onClick={() => {
-                    if (selectedFiles.length === 0) {
-                        return
-                    }
-
-                    upload.onUpload(selectedFiles)
-                }}
-                disabled={upload.isLoading || selectedFiles.length === 0}
-            >
-                {upload.isLoading ? "Uploading..." : "Upload"}
-            </button>
+                <div className={styles.actions}>
+                    <Button
+                        label={"Upload"}
+                        variant="primary"
+                        fullWidth
+                        disabled={upload.isLoading || selectedFiles.length === 0}
+                        isLoading={upload.isLoading}
+                        onClick={handleUpload}
+                    />
+                </div>
+            </div>
         </Modal>
     )
 }

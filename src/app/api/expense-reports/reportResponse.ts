@@ -1,12 +1,13 @@
 import { getSignedUrl } from "@/server/services/firebase/storage"
 import type { ExpenseReport } from "@/types"
-import type { ExpenseReportListItem } from "./contract"
+import type { ExpenseReport as ExpenseReportListItem } from "./contract"
 
 export const toExpenseReportListItem = async (report: ExpenseReport): Promise<ExpenseReportListItem> => ({
   id: report.id,
   status: report.status,
   confidence: report.confidence,
   receiptUrl: !report.receipt.storagePath ? null : await getSignedUrl(report.receipt.storagePath),
+  receiptFileName: report.receipt.fileName || null,
   invoiceNumber: report.fields.invoiceNumber,
   description: report.fields.description,
   amount: report.fields.amount,
