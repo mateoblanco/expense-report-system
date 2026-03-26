@@ -1,26 +1,22 @@
-type Field<T> = {
-  value: T | null
-  confidence: number | null
-}
-
 export type ExpenseReport = {
   id: string
   userId: string | null
   status: "processing" | "completed" | "failed",
+  confidence: number | null
 
   fields: {
-    invoiceNumber: Field<string> | null,
-    description: Field<string> | null,
-    amount: Field<number> | null,
-    currency: Field<string> | null,
-    category: Field<string> | null,
-    expenseDate: Field<string> | null,
-    vendorName: Field<string> | null,
-    additionalNotes: Field<string> | null,
-    subtotal: Field<number> | null
-    taxAmount: Field<number> | null
-    dueDate: Field<string> | null
-    vendorTaxId: Field<string> | null
+    invoiceNumber: string | null,
+    description: string | null,
+    amount: number | null,
+    currency: string | null,
+    category: string | null,
+    expenseDate: string | null,
+    vendorName: string | null,
+    additionalNotes: string | null,
+    subtotal: number | null
+    taxAmount: number | null
+    dueDate: string | null
+    vendorTaxId: string | null
   },
 
   receipt: {
@@ -40,3 +36,6 @@ export type ExpenseReport = {
 }
 
 export type CreateExpenseReportData = Omit<ExpenseReport, "id" | "createdAt" | "updatedAt">
+
+export type ExpenseReportFieldValues = ExpenseReport["fields"]
+export type ExpenseReportFieldKey = keyof ExpenseReportFieldValues
