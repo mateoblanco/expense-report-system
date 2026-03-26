@@ -129,19 +129,6 @@ Other
 - If unclear, return null.
 
 --------------------------------
-OPTIONAL FIELDS
---------------------------------
-
-paymentMethod:
-- Extract if explicitly mentioned (e.g., transfer, card, direct debit).
-- Otherwise return null.
-
-servicePeriodStart / servicePeriodEnd:
-- Extract only if a clear service period exists:
-  - e.g., "Inicio / Fin", billing period, usage period
-- Normalize as YYYY-MM-DD when possible.
-
---------------------------------
 ADDITIONAL NOTES
 --------------------------------
 

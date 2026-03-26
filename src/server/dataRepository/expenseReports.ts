@@ -11,7 +11,9 @@ const findExpenseReportById = async (id: string): Promise<ExpenseReport | null> 
 
 const findExpenseReportsByUserId = async (userId: string): Promise<ExpenseReport[]> => {
   const snapshot = await expenseReportsCollection().where("userId", "==", userId).get()
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as ExpenseReport)
+  return snapshot.docs
+    .map((doc) => ({ id: doc.id, ...doc.data() }) as ExpenseReport)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 }
 
 const createExpenseReport = async (data: CreateExpenseReportData): Promise<ExpenseReport> => {
