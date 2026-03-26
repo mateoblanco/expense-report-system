@@ -1,11 +1,12 @@
 import { z } from "zod"
 import { ExpenseReportLogic } from "@/server/logic/expenseReports/expenseReportLogic"
-import { getSignedUrl } from "@/server/services/firebase/storage"
 import {
   expenseReportsSuccessResponseSchema,
   getExpenseReportsResponseSchema,
 } from "@/app/api/expense-reports/contract"
 import { verifyAuthToken } from "@/server/services/firebase/auth"
+import { getErrorMessage, isAuthError } from "./errorHelpers"
+import { toExpenseReportListItem } from "./reportResponse"
 
 export const runtime = "nodejs"
 
@@ -34,21 +35,14 @@ export const GET = async (request: Request) => {
     const decodedToken = await verifyAuthToken(request)
     const reports = await ExpenseReportLogic.getExpenseReportsByUserId(decodedToken.uid)
     const data = await Promise.all(
-      reports.map(async (r) => ({
-        id: r.id,
-        status: r.status,
-        receiptUrl:
-          r.status === "failed" || !r.receipt.storagePath
-            ? null
-            : await getSignedUrl(r.receipt.storagePath),
-      }))
+      reports.map((report) => toExpenseReportListItem(report))
     )
     return Response.json(getExpenseReportsResponseSchema.parse({ data }))
   } catch (error) {
     if (isAuthError(error)) {
       return Response.json({ error: "Unauthorized" }, { status: 401 })
     }
-    return Response.json({ error: getErrorMessage(error) }, { status: 500 })
+    return Response.json({ error: getErrorMessage(error, "Failed to get expense reports.") }, { status: 500 })
   }
 }
 
@@ -118,22 +112,8 @@ export const POST = async (request: Request) => {
     }
 
     return Response.json(
-      { error: getErrorMessage(error) },
+      { error: getErrorMessage(error, "Failed to create expense reports.") },
       { status: 500 },
     )
   }
-}
-
-const isAuthError = (error: unknown) =>
-  error instanceof Error &&
-  ("code" in error && typeof (error as Record<string, unknown>).code === "string"
-    ? ((error as Record<string, unknown>).code as string).startsWith("auth/")
-    : error.message === "Missing or invalid Authorization header")
-
-const getErrorMessage = (error: unknown) => {
-  if (error instanceof Error && error.message) {
-    return error.message
-  }
-
-  return "Failed to create expense reports."
 }

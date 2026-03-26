@@ -1,0 +1,125 @@
+.modalPopup {
+    width: min(96vw, 1240px);
+    max-width: 1240px;
+}
+
+.container {
+    position: relative;
+    padding: 24px;
+}
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    position: sticky;
+    top: 0px;
+    background: var(--color-bg-white);
+    z-index: 1;
+    width: 100%;
+    padding: 24px;
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.contentGrid {
+    display: grid;
+    grid-template-columns:1fr 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+.detailsColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    min-width: 0;
+}
+
+.previewColumn {
+    min-width: 0;
+}
+
+.title {
+    margin: 0;
+    font-size: 24px;
+    line-height: 1.1;
+    color: var(--color-text-dark);
+}
+
+.headerActions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.section_title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text-dark);
+}
+
+.section_fields {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 16px;
+    background: var(--color-bg-surface);
+}
+
+.extraction_details {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 16px;
+    background: var(--color-bg-surface);
+}
+
+.extraction_field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.extraction_label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-medium);
+}
+
+.extraction_value {
+    font-size: 14px;
+    color: var(--color-text-primary);
+    padding: 12px 0;
+}
+
+.previewLoading,
+.previewEmpty {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+    border-radius: 20px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-light);
+}
+
+.previewMessage {
+    margin: 0;
+    font-size: 14px;
+    color: var(--color-text-light);
+}

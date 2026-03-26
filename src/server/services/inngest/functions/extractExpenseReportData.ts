@@ -2,7 +2,7 @@ import { EXPENSE_REPORT_EXTRACT_DATA_EVENT } from "../events"
 import { inngest } from "../client"
 import { extractExpenseReportDataEventSchema } from "../schemas"
 import { downloadFile } from "@/server/services/firebase/storage"
-import { ExpenseReportLogic } from "@/server/logic/expenseReports/expenseReportLogic"
+import { ExpenseReportLogic, getAverageConfidence } from "@/server/logic/expenseReports/expenseReportLogic"
 import { extractDataFromFile } from "@/server/logic/expenseReports/dataExtraction/extractDataFromFile"
 import { DataExtractionConfig } from "@/server/logic/expenseReports/dataExtraction/config"
 
@@ -28,19 +28,20 @@ export const extractExpenseReportData = inngest.createFunction(
       await step.run("persist-extraction", async () => {
         await ExpenseReportLogic.updateExpenseReportExtraction(payload.expenseReportId, {
           status: "completed",
+          confidence: getAverageConfidence(extraction),
           fields: {
-            invoiceNumber: { value: extraction.invoiceNumber.value, confidence: extraction.invoiceNumber.confidence },
-            description: { value: extraction.description.value, confidence: extraction.description.confidence },
-            amount: { value: extraction.amount.value, confidence: extraction.amount.confidence },
-            currency: { value: extraction.currency.value, confidence: extraction.currency.confidence },
-            category: { value: extraction.category.value, confidence: extraction.category.confidence },
-            expenseDate: { value: extraction.expenseDate.value, confidence: extraction.expenseDate.confidence },
-            vendorName: { value: extraction.vendorName.value, confidence: extraction.vendorName.confidence },
-            additionalNotes: { value: extraction.additionalNotes.value, confidence: extraction.additionalNotes.confidence },
-            subtotal: { value: extraction.subtotal.value, confidence: extraction.subtotal.confidence },
-            taxAmount: { value: extraction.taxAmount.value, confidence: extraction.taxAmount.confidence },
-            dueDate: { value: extraction.dueDate.value, confidence: extraction.dueDate.confidence },
-            vendorTaxId: { value: extraction.vendorTaxId.value, confidence: extraction.vendorTaxId.confidence },
+            invoiceNumber: extraction.invoiceNumber.value,
+            description: extraction.description.value,
+            amount: extraction.amount.value,
+            currency: extraction.currency.value,
+            category: extraction.category.value,
+            expenseDate: extraction.expenseDate.value,
+            vendorName: extraction.vendorName.value,
+            additionalNotes: extraction.additionalNotes.value,
+            subtotal: extraction.subtotal.value,
+            taxAmount: extraction.taxAmount.value,
+            dueDate: extraction.dueDate.value,
+            vendorTaxId: extraction.vendorTaxId.value,
           },
           extraction: {
             provider: DataExtractionConfig.model as string,

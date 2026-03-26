@@ -1,0 +1,50 @@
+.spinner {
+    --spinner-inner-size: 10px;
+
+    box-sizing: border-box;
+    position: relative;
+    display: inline-block;
+    border-radius: 50%;
+    animation: .7s rotate infinite linear;
+    -webkit-mask: radial-gradient(circle at 50% 50%,
+            transparent calc(var(--spinner-inner-size) / 2),
+            #000 calc((var(--spinner-inner-size) / 2) + 1px));
+    mask: radial-gradient(circle at 50% 50%,
+            transparent calc(var(--spinner-inner-size) / 2),
+            #000 calc((var(--spinner-inner-size) / 2) + 1px));
+
+    background: conic-gradient(from 90deg at 50% 50%,
+            #fff 0deg,
+            #E6E6E6 0.04deg,
+            #757575 360deg);
+
+
+    height: 16px;
+    width: 16px;
+
+    &::after {
+        height: 3px;
+        width: 3px;
+        border-radius: 3px;
+        background: #313132;
+    }
+
+    &::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #757575;
+    }
+}
+
+@keyframes rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}

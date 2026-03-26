@@ -10,14 +10,41 @@ export const expenseReportsSuccessResponseSchema = z.object({
 
 export type ExpenseReportsSuccessResponse = z.infer<typeof expenseReportsSuccessResponseSchema>
 
-export const getExpenseReportsResponseSchema = z.object({
-  data: z.array(
-    z.object({
-      id: z.string(),
-      status: z.string(),
-      receiptUrl: z.string().nullable(),
-    }),
-  ),
+const editableExpenseReportFieldSchemas = {
+  invoiceNumber: z.string().nullable(),
+  description: z.string().nullable(),
+  amount: z.number().nullable(),
+  currency: z.string().nullable(),
+  category: z.string().nullable(),
+  expenseDate: z.string().nullable(),
+  vendorName: z.string().nullable(),
+  additionalNotes: z.string().nullable(),
+  subtotal: z.number().nullable(),
+  taxAmount: z.number().nullable(),
+  dueDate: z.string().nullable(),
+  vendorTaxId: z.string().nullable(),
+}
+
+export const expenseReportListItemSchema = z.object({
+  id: z.string(),
+  status: z.enum(["processing", "completed", "failed"]),
+  confidence: z.number().nullable(),
+  receiptUrl: z.string().nullable(),
+  receiptFileName: z.string().nullable(),
+  ...editableExpenseReportFieldSchemas,
 })
 
+export const getExpenseReportsResponseSchema = z.object({
+  data: z.array(expenseReportListItemSchema),
+})
+
+export type ExpenseReport = z.infer<typeof expenseReportListItemSchema>
 export type GetExpenseReportsResponse = z.infer<typeof getExpenseReportsResponseSchema>
+
+export const updateExpenseReportRequestSchema = z.object(editableExpenseReportFieldSchemas)
+
+export type UpdateExpenseReportRequest = z.infer<typeof updateExpenseReportRequestSchema>
+
+export const updateExpenseReportResponseSchema = expenseReportListItemSchema
+
+export type UpdateExpenseReportResponse = z.infer<typeof updateExpenseReportResponseSchema>
